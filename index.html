@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Калькулятор стоимости спортивных сборов</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.15);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2937;
+      --danger: #f97373;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1e293b, #020617 55%);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 12px;
+    }
+    .container {
+      width: 100%;
+      max-width: 1100px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      gap: 24px;
+    }
+    @media (max-width: 900px) {
+      .container { grid-template-columns: minmax(0, 1fr); }
+    }
+    .card {
+      background: radial-gradient(circle at top left, #1e293b 0, #020617 55%);
+      border-radius: 24px;
+      border: 1px solid #1e293b;
+      box-shadow: 0 18px 50px rgba(15, 23, 42, 0.9);
+      padding: 24px 24px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(34, 197, 94, 0.12), transparent 60%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+    .card-inner {
+      position: relative;
+      z-index: 1;
+    }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 24px;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    h1 span.accent {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 14px 16px;
+      margin-bottom: 14px;
+    }
+    .field-group {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 18px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      padding: 14px 14px 12px;
+      margin-bottom: 8px;
+    }
+    .field-group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 4px;
+    }
+    .field-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .field-note {
+      font-size: 11px;
+      color: var(--muted);
+      opacity: 0.9;
+    }
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .chip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.9);
+      font-size: 12px;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.14s ease-out;
+      user-select: none;
+    }
+    .chip:hover {
+      border-color: rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.9);
+      transform: translateY(-1px);
+    }
+    .chip input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .chip span.label {
+      font-weight: 500;
+    }
+    .chip span.price {
+      color: var(--muted);
+    }
+    .chip[data-type="primary"].active {
+      border-color: rgba(34, 197, 94, 0.8);
+      background: rgba(22, 163, 74, 0.13);
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25);
+    }
+    .chip[data-type="toggle"].active {
+      border-color: rgba(248, 250, 252, 0.4);
+      background: rgba(148, 163, 184, 0.12);
+    }
+    .chip-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.65);
+      color: #e5e7eb;
+      background: rgba(15, 23, 42, 0.85);
+    }
+    .summary-card {
+      border-radius: 24px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), rgba(15, 23, 42, 0.98));
+      padding: 22px 20px 22px;
+      position: relative;
+      overflow: hidden;
+    }
+    .summary-card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: conic-gradient(
+        from 220deg,
+        rgba(34, 197, 94, 0.18),
+        transparent 25%,
+        rgba(56, 189, 248, 0.18),
+        transparent 50%,
+        rgba(244, 63, 94, 0.18),
+        transparent 75%,
+        rgba(234, 179, 8, 0.18),
+        transparent
+      );
+      opacity: 0.7;
+      filter: blur(28px);
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+    .summary-inner {
+      position: relative;
+      z-index: 1;
+    }
+    .summary-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .summary-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #e5e7eb;
+    }
+    .summary-pill {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      color: #e5e7eb;
+    }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+    .total-label {
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+    .total-value {
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #f9fafb;
+    }
+    .total-suffix {
+      font-size: 14px;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+    .breakdown {
+      margin-top: 10px;
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      padding: 10px 11px 8px;
+      font-size: 12px;
+    }
+    .breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 3px 1px;
+      color: var(--muted);
+    }
+    .breakdown-row strong {
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+    .breakdown-row .value {
+      color: #e5e7eb;
+    }
+    .breakdown-row.muted .value {
+      color: var(--muted);
+    }
+    .breakdown-row.total {
+      border-top: 1px dashed rgba(55, 65, 81, 0.9);
+      margin-top: 4px;
+      padding-top: 6px;
+      font-size: 12.5px;
+    }
+    .org-fee {
+      color: #fde68a;
+    }
+    .mini-hint {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .mini-hint span {
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+    }
+    .toggle-row label {
+      font-size: 12px;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .toggle-row input[type="checkbox"] {
+      width: 32px;
+      height: 18px;
+      appearance: none;
+      background: #111827;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      position: relative;
+      cursor: pointer;
+      transition: all 0.15s ease-out;
+    }
+    .toggle-row input[type="checkbox"]::before {
+      content: "";
+      position: absolute;
+      width: 13px;
+      height: 13px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      top: 1.5px;
+      left: 2px;
+      transition: all 0.15s ease-out;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.7);
+    }
+    .toggle-row input[type="checkbox"]:checked {
+      background: rgba(34, 197, 94, 0.28);
+      border-color: rgba(34, 197, 94, 0.9);
+    }
+    .toggle-row input[type="checkbox"]:checked::before {
+      transform: translateX(12px);
+      background: #bbf7d0;
+    }
+    .custom-prices {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+      gap: 6px;
+    }
+    .custom-prices label {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .custom-prices input {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 999px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      padding: 5px 9px;
+      color: #e5e7eb;
+      font-size: 12px;
+      outline: none;
+      width: 100%;
+    }
+    .custom-prices input:focus {
+      border-color: rgba(56, 189, 248, 0.8);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3);
+    }
+    .error {
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--danger);
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Левая часть: настройки -->
+    <div class="card">
+      <div class="card-inner">
+        <h1>
+          Калькулятор сборов
+          <span class="accent">Gornaz</span>
+        </h1>
+        <div class="subtitle">
+          Выберите количество дней, тип размещения, питание и аренду лодки — итоговая стоимость посчитается автоматически.
+        </div>
+
+        <!-- Количество дней -->
+        <div class="field-group">
+          <div class="field-group-header">
+            <div class="field-title">Количество дней (база)</div>
+            <div class="field-note">Фиксированная стоимость сборов</div>
+          </div>
+          <div class="options" id="daysOptions">
+            <label class="chip" data-type="primary">
+              <input type="radio" name="days" value="2" checked />
+              <span class="label">2 дня</span>
+              <span class="price">5 500 ₽</span>
+            </label>
+            <label class="chip" data-type="primary">
+              <input type="radio" name="days" value="3" />
+              <span class="label">3 дня</span>
+              <span class="price">7 500 ₽</span>
+            </label>
+            <label class="chip" data-type="primary">
+              <input type="radio" name="days" value="5" />
+              <span class="label">5 дней</span>
+              <span class="price">10 500 ₽</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Заезд -->
+        <div class="field-group">
+          <div class="field-group-header">
+            <div class="field-title">Заезд</div>
+            <div class="field-note">Влияет на ночи и завтраки</div>
+          </div>
+          <div class="options" id="arrivalOptions">
+            <label class="chip" data-type="primary">
+              <input type="radio" name="arrival" value="evening" checked />
+              <span class="label">Накануне вечером</span>
+              <span class="price">как в базовом расчёте</span>
+            </label>
+            <label class="chip" data-type="primary">
+              <input type="radio" name="arrival" value="morning" />
+              <span class="label">В день заезда утром</span>
+              <span class="price">−1 ночь и −1 завтрак</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Номер -->
+        <div class="field-group">
+          <div class="field-group-header">
+            <div class="field-title">Размещение (номер)</div>
+            <div class="field-note">Цена за сутки × кол‑во ночей</div>
+          </div>
+          <div class="options" id="roomOptions">
+            <label class="chip" data-type="primary">
+              <input type="radio" name="room" value="econom" checked />
+              <span class="label">Эконом</span>
+              <span class="price">900 ₽/сутки</span>
+            </label>
+            <label class="chip" data-type="primary">
+              <input type="radio" name="room" value="standard" />
+              <span class="label">Стандарт</span>
+              <span class="price">1 300 ₽/сутки</span>
+            </label>
+            <label class="chip" data-type="primary">
+              <input type="radio" name="room" value="comfort" />
+              <span class="label">Комфорт</span>
+              <span class="price">2 450 ₽/сутки</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Питание -->
+        <div class="field-group">
+          <div class="field-group-header">
+            <div class="field-title">Питание</div>
+            <div class="field-note">За 1 приём × дни (ужин без последнего дня)</div>
+          </div>
+          <div class="options" id="foodOptions">
+            <label class="chip" data-type="toggle">
+              <input type="checkbox" name="food" value="breakfast" />
+              <span class="label">Завтрак</span>
+              <span class="price">320 ₽</span>
+            </label>
+            <label class="chip" data-type="toggle">
+              <input type="checkbox" name="food" value="lunch" />
+              <span class="label">Обед</span>
+              <span class="price">370 ₽</span>
+            </label>
+            <label class="chip" data-type="toggle">
+              <input type="checkbox" name="food" value="dinner" />
+              <span class="label">Ужин</span>
+              <span class="price">480 ₽ (кроме последнего дня)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Лодка -->
+        <div class="field-group">
+          <div class="field-group-header">
+            <div class="field-title">Аренда лодки</div>
+            <div class="field-note">На всё время сборов</div>
+          </div>
+          <div class="options" id="boatOptions">
+            <label class="chip" data-type="primary">
+              <input type="radio" name="boat" value="own" checked />
+              <span class="label">Своя лодка</span>
+              <span class="price">0 ₽</span>
+            </label>
+            <label class="chip" data-type="primary">
+              <input type="radio" name="boat" value="rent" />
+              <span class="label">Берёшь в аренду</span>
+              <span class="price">+1 000 ₽</span>
+            </label>
+            <label class="chip" data-type="primary">
+              <input type="radio" name="boat" value="give" />
+              <span class="label">Даёшь в аренду</span>
+              <span class="price">скидка 1 000 ₽</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Кастомные настройки цен -->
+        <div class="field-group">
+          <div class="field-group-header">
+            <div class="field-title">Настроить цены</div>
+            <div class="field-note">Опционально — под свои условия</div>
+          </div>
+
+          <div class="toggle-row">
+            <label>
+              <input type="checkbox" id="enableCustomPrices" />
+              Включить ручные цены
+            </label>
+            <span class="chip-badge">для опытных организаторов</span>
+          </div>
+
+          <div class="custom-prices" id="customPricesBlock" style="display: none;">
+            <label>
+              БАЗА: 2 дня
+              <input type="text" id="base2" value="5500" />
+            </label>
+            <label>
+              БАЗА: 3 дня
+              <input type="text" id="base3" value="7500" />
+            </label>
+            <label>
+              БАЗА: 5 дней
+              <input type="text" id="base5" value="10500" />
+            </label>
+            <label>
+              Эконом (₽/сутки)
+              <input type="text" id="roomEconom" value="900" />
+            </label>
+            <label>
+              Стандарт (₽/сутки)
+              <input type="text" id="roomStandard" value="1300" />
+            </label>
+            <label>
+              Комфорт (₽/сутки)
+              <input type="text" id="roomComfort" value="2450" />
+            </label>
+            <label>
+              Завтрак (₽ за приём)
+              <input type="text" id="foodBreakfast" value="320" />
+            </label>
+            <label>
+              Обед (₽ за приём)
+              <input type="text" id="foodLunch" value="370" />
+            </label>
+            <label>
+              Ужин (₽ за приём)
+              <input type="text" id="foodDinner" value="480" />
+            </label>
+            <label>
+              Аренда лодки (+₽ / −скидка)
+              <input type="text" id="boatRent" value="1000" />
+            </label>
+            <label>
+              Оргвзнос (фиксировано)
+              <input type="text" id="orgFee" value="300" />
+            </label>
+          </div>
+          <div class="error" id="customError">Проверьте, что все значения — числа.</div>
+
+          <div class="mini-hint">
+            Можно изменить цифры, если стоимость для других сборов отличается. При выключенной настройке используются базовые значения.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Правая часть: итог -->
+    <div class="summary-card">
+      <div class="summary-inner">
+        <div class="summary-title-row">
+          <div class="summary-title">ИТОГОВАЯ СТОИМОСТЬ</div>
+          <div class="summary-pill" id="summaryDaysLabel">2 дн. • Эконом • заезд вечером</div>
+        </div>
+
+        <div class="total-row">
+          <div class="total-label">К оплате</div>
+          <div>
+            <span class="total-value" id="totalValue">0</span>
+            <span class="total-suffix">₽</span>
+          </div>
+        </div>
+
+        <div class="breakdown">
+          <div class="breakdown-row">
+            <span>Базовая стоимость сборов</span>
+            <span class="value" id="baseValue">0 ₽</span>
+          </div>
+          <div class="breakdown-row">
+            <span>Размещение (номер)</span>
+            <span class="value" id="roomValue">0 ₽</span>
+          </div>
+          <div class="breakdown-row">
+            <span>Питание</span>
+            <span class="value" id="foodValue">0 ₽</span>
+          </div>
+          <div class="breakdown-row">
+            <span>Аренда лодки</span>
+            <span class="value" id="boatValue">0 ₽</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="org-fee">Оргвзнос (сауна, теннис, бильярд)</span>
+            <span class="value org-fee" id="orgValue">300 ₽</span>
+          </div>
+          <div class="breakdown-row total">
+            <strong>Всего</strong>
+            <strong class="value" id="totalValueLine">0 ₽</strong>
+          </div>
+        </div>
+
+        <div class="mini-hint">
+          Для разных участников можно быстро менять параметры и сразу видеть, как меняется сумма. Оргвзнос <span>добавляется всегда</span>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const defaultPrices = {
+        base: { 2: 5500, 3: 7500, 5: 10500 },
+        room: { econom: 900, standard: 1300, comfort: 2450 },
+        food: { breakfast: 320, lunch: 370, dinner: 480 },
+        boat: { own: 0, rent: 1000, give: -1000 },
+        orgFee: 300
+      };
+
+      const elements = {
+        daysOptions: document.getElementById("daysOptions"),
+        arrivalOptions: document.getElementById("arrivalOptions"),
+        roomOptions: document.getElementById("roomOptions"),
+        foodOptions: document.getElementById("foodOptions"),
+        boatOptions: document.getElementById("boatOptions"),
+        enableCustom: document.getElementById("enableCustomPrices"),
+        customBlock: document.getElementById("customPricesBlock"),
+        customError: document.getElementById("customError"),
+        base2: document.getElementById("base2"),
+        base3: document.getElementById("base3"),
+        base5: document.getElementById("base5"),
+        roomEconom: document.getElementById("roomEconom"),
+        roomStandard: document.getElementById("roomStandard"),
+        roomComfort: document.getElementById("roomComfort"),
+        foodBreakfast: document.getElementById("foodBreakfast"),
+        foodLunch: document.getElementById("foodLunch"),
+        foodDinner: document.getElementById("foodDinner"),
+        boatRent: document.getElementById("boatRent"),
+        orgFee: document.getElementById("orgFee"),
+        totalValue: document.getElementById("totalValue"),
+        totalValueLine: document.getElementById("totalValueLine"),
+        baseValue: document.getElementById("baseValue"),
+        roomValue: document.getElementById("roomValue"),
+        foodValue: document.getElementById("foodValue"),
+        boatValue: document.getElementById("boatValue"),
+        orgValue: document.getElementById("orgValue"),
+        summaryDaysLabel: document.getElementById("summaryDaysLabel")
+      };
+
+      function formatMoney(value) {
+        return value.toLocaleString("ru-RU");
+      }
+
+      function getPrices() {
+        if (!elements.enableCustom.checked) return { ...defaultPrices };
+
+        const parsed = (field) => {
+          const v = field.value.replace(/\s+/g, "").replace(",", ".");
+          const num = Number(v);
+          return isFinite(num) ? num : NaN;
+        };
+
+        const p = {
+          base: {
+            2: parsed(elements.base2),
+            3: parsed(elements.base3),
+            5: parsed(elements.base5)
+          },
+          room: {
+            econom: parsed(elements.roomEconom),
+            standard: parsed(elements.roomStandard),
+            comfort: parsed(elements.roomComfort)
+          },
+          food: {
+            breakfast: parsed(elements.foodBreakfast),
+            lunch: parsed(elements.foodLunch),
+            dinner: parsed(elements.foodDinner)
+          },
+          boat: {
+            own: 0,
+            rent: parsed(elements.boatRent),
+            give: -parsed(elements.boatRent)
+          },
+          orgFee: parsed(elements.orgFee)
+        };
+
+        const allValues = [
+          p.base[2],
+          p.base[3],
+          p.base[5],
+          p.room.econom,
+          p.room.standard,
+          p.room.comfort,
+          p.food.breakfast,
+          p.food.lunch,
+          p.food.dinner,
+          p.boat.rent,
+          -p.boat.give,
+          p.orgFee
+        ];
+
+        const hasNaN = allValues.some((x) => Number.isNaN(x));
+        elements.customError.style.display = hasNaN ? "block" : "none";
+        return hasNaN ? { ...defaultPrices } : p;
+      }
+
+      function getSelected(name) {
+        return /** @type {HTMLInputElement|null} */ (
+          document.querySelector(`input[name="${name}"]:checked`)
+        );
+      }
+
+      function updateActiveChips(groupElement) {
+        const chips = groupElement.querySelectorAll(".chip");
+        chips.forEach((chip) => {
+          const input = chip.querySelector("input");
+          if (!input) return;
+          if (input.type === "radio") {
+            chip.classList.toggle("active", input.checked);
+          } else if (input.type === "checkbox") {
+            chip.classList.toggle("active", input.checked);
+          }
+        });
+      }
+
+      function calculate() {
+        const prices = getPrices();
+
+        const daysInput = getSelected("days");
+        const roomInput = getSelected("room");
+        const boatInput = getSelected("boat");
+        const arrivalInput = getSelected("arrival");
+        const foodChecked = Array.from(
+          /** @type {NodeListOf<HTMLInputElement>} */ (
+            document.querySelectorAll('input[name="food"]:checked')
+          )
+        );
+
+        const days = daysInput ? Number(daysInput.value) : 2;
+        const roomType = roomInput ? roomInput.value : "econom";
+        const boatType = boatInput ? boatInput.value : "own";
+        const arrivalType = arrivalInput ? arrivalInput.value : "evening";
+
+        const basePrice = prices.base[days] || 0;
+
+        // Ночи и приёмы пищи в зависимости от заезда
+        const nights = arrivalType === "morning" ? Math.max(days - 1, 0) : days;
+        const breakfastDays = arrivalType === "morning" ? Math.max(days - 1, 0) : days;
+        const lunchDays = days;
+        const dinnerDays = Math.max(days - 1, 0); // ужин без последнего дня
+
+        const roomPerNight = prices.room[roomType] || 0;
+        const roomTotal = roomPerNight * nights;
+
+        let foodTotal = 0;
+        foodChecked.forEach((f) => {
+          const p = prices.food[f.value] || 0;
+          if (f.value === "breakfast") {
+            foodTotal += p * breakfastDays;
+          } else if (f.value === "lunch") {
+            foodTotal += p * lunchDays;
+          } else if (f.value === "dinner") {
+            foodTotal += p * dinnerDays;
+          }
+        });
+
+        const boatDelta = prices.boat[boatType] || 0;
+        const orgFee = prices.orgFee || 0;
+
+        const total = basePrice + roomTotal + foodTotal + boatDelta + orgFee;
+
+        elements.baseValue.textContent = `${formatMoney(basePrice)} ₽`;
+        elements.roomValue.textContent = `${formatMoney(roomTotal)} ₽`;
+        elements.foodValue.textContent = `${formatMoney(foodTotal)} ₽`;
+
+        let boatLabel = boatDelta === 0 ? "0 ₽" : "";
+        if (boatDelta > 0) boatLabel = `+${formatMoney(boatDelta)} ₽`;
+        if (boatDelta < 0) boatLabel = `−${formatMoney(Math.abs(boatDelta))} ₽`;
+        elements.boatValue.textContent = boatLabel;
+
+        elements.orgValue.textContent = `${formatMoney(orgFee)} ₽`;
+
+        elements.totalValue.textContent = formatMoney(total);
+        elements.totalValueLine.textContent = `${formatMoney(total)} ₽`;
+
+        const roomLabel =
+          roomType === "econom"
+            ? "Эконом"
+            : roomType === "standard"
+            ? "Стандарт"
+            : "Комфорт";
+        const arrivalLabel =
+          arrivalType === "morning" ? "заезд утром" : "заезд вечером";
+        elements.summaryDaysLabel.textContent = `${days} дн. • ${roomLabel} • ${arrivalLabel}`;
+      }
+
+      function attachChipHandlers(group) {
+        group.addEventListener("click", (e) => {
+          const target = e.target;
+          const chip = target.closest(".chip");
+          if (!chip || !group.contains(chip)) return;
+          const input = chip.querySelector("input");
+          if (!input) return;
+          if (input.type === "radio") {
+            input.checked = true;
+          } else if (input.type === "checkbox") {
+            input.checked = !input.checked;
+          }
+          updateActiveChips(group);
+          calculate();
+        });
+        updateActiveChips(group);
+      }
+
+      attachChipHandlers(elements.daysOptions);
+      attachChipHandlers(elements.arrivalOptions);
+      attachChipHandlers(elements.roomOptions);
+      attachChipHandlers(elements.foodOptions);
+      attachChipHandlers(elements.boatOptions);
+
+      elements.enableCustom.addEventListener("change", () => {
+        elements.customBlock.style.display = elements.enableCustom.checked
+          ? "grid"
+          : "none";
+        calculate();
+      });
+
+      [
+        elements.base2,
+        elements.base3,
+        elements.base5,
+        elements.roomEconom,
+        elements.roomStandard,
+        elements.roomComfort,
+        elements.foodBreakfast,
+        elements.foodLunch,
+        elements.foodDinner,
+        elements.boatRent,
+        elements.orgFee
+      ].forEach((input) => {
+        input.addEventListener("input", calculate);
+      });
+
+      calculate();
+    })();
+  </script>
+</body>
+</html>
