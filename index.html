@@ -511,73 +511,6 @@
           </div>
         </div>
 
-        <!-- Кастомные настройки цен -->
-        <div class="field-group">
-          <div class="field-group-header">
-            <div class="field-title">Настроить цены</div>
-            <div class="field-note">Опционально — под свои условия</div>
-          </div>
-
-          <div class="toggle-row">
-            <label>
-              <input type="checkbox" id="enableCustomPrices" />
-              Включить ручные цены
-            </label>
-            <span class="chip-badge">для опытных организаторов</span>
-          </div>
-
-          <div class="custom-prices" id="customPricesBlock" style="display: none;">
-            <label>
-              БАЗА: 2 дня
-              <input type="text" id="base2" value="5500" />
-            </label>
-            <label>
-              БАЗА: 3 дня
-              <input type="text" id="base3" value="7500" />
-            </label>
-            <label>
-              БАЗА: 5 дней
-              <input type="text" id="base5" value="10500" />
-            </label>
-            <label>
-              Эконом (₽/сутки)
-              <input type="text" id="roomEconom" value="900" />
-            </label>
-            <label>
-              Стандарт (₽/сутки)
-              <input type="text" id="roomStandard" value="1300" />
-            </label>
-            <label>
-              Комфорт (₽/сутки)
-              <input type="text" id="roomComfort" value="2450" />
-            </label>
-            <label>
-              Завтрак (₽ за приём)
-              <input type="text" id="foodBreakfast" value="320" />
-            </label>
-            <label>
-              Обед (₽ за приём)
-              <input type="text" id="foodLunch" value="370" />
-            </label>
-            <label>
-              Ужин (₽ за приём)
-              <input type="text" id="foodDinner" value="480" />
-            </label>
-            <label>
-              Аренда лодки (+₽ / −скидка)
-              <input type="text" id="boatRent" value="1000" />
-            </label>
-            <label>
-              Оргвзнос (фиксировано)
-              <input type="text" id="orgFee" value="300" />
-            </label>
-          </div>
-          <div class="error" id="customError">Проверьте, что все значения — числа.</div>
-
-          <div class="mini-hint">
-            Можно изменить цифры, если стоимость для других сборов отличается. При выключенной настройке используются базовые значения.
-          </div>
-        </div>
       </div>
     </div>
 
@@ -636,6 +569,7 @@
 
   <script>
     (function () {
+      // настройка цен
       const defaultPrices = {
         base: { 2: 5500, 3: 7500, 5: 10500 },
         room: { econom: 900, standard: 1300, comfort: 2450 },
@@ -650,20 +584,6 @@
         roomOptions: document.getElementById("roomOptions"),
         foodOptions: document.getElementById("foodOptions"),
         boatOptions: document.getElementById("boatOptions"),
-        enableCustom: document.getElementById("enableCustomPrices"),
-        customBlock: document.getElementById("customPricesBlock"),
-        customError: document.getElementById("customError"),
-        base2: document.getElementById("base2"),
-        base3: document.getElementById("base3"),
-        base5: document.getElementById("base5"),
-        roomEconom: document.getElementById("roomEconom"),
-        roomStandard: document.getElementById("roomStandard"),
-        roomComfort: document.getElementById("roomComfort"),
-        foodBreakfast: document.getElementById("foodBreakfast"),
-        foodLunch: document.getElementById("foodLunch"),
-        foodDinner: document.getElementById("foodDinner"),
-        boatRent: document.getElementById("boatRent"),
-        orgFee: document.getElementById("orgFee"),
         totalValue: document.getElementById("totalValue"),
         totalValueLine: document.getElementById("totalValueLine"),
         baseValue: document.getElementById("baseValue"),
@@ -680,56 +600,7 @@
       }
 
       function getPrices() {
-        if (!elements.enableCustom.checked) return { ...defaultPrices };
-
-        const parsed = (field) => {
-          const v = field.value.replace(/\s+/g, "").replace(",", ".");
-          const num = Number(v);
-          return isFinite(num) ? num : NaN;
-        };
-
-        const p = {
-          base: {
-            2: parsed(elements.base2),
-            3: parsed(elements.base3),
-            5: parsed(elements.base5)
-          },
-          room: {
-            econom: parsed(elements.roomEconom),
-            standard: parsed(elements.roomStandard),
-            comfort: parsed(elements.roomComfort)
-          },
-          food: {
-            breakfast: parsed(elements.foodBreakfast),
-            lunch: parsed(elements.foodLunch),
-            dinner: parsed(elements.foodDinner)
-          },
-          boat: {
-            own: 0,
-            rent: parsed(elements.boatRent),
-            give: -parsed(elements.boatRent)
-          },
-          orgFee: parsed(elements.orgFee)
-        };
-
-        const allValues = [
-          p.base[2],
-          p.base[3],
-          p.base[5],
-          p.room.econom,
-          p.room.standard,
-          p.room.comfort,
-          p.food.breakfast,
-          p.food.lunch,
-          p.food.dinner,
-          p.boat.rent,
-          -p.boat.give,
-          p.orgFee
-        ];
-
-        const hasNaN = allValues.some((x) => Number.isNaN(x));
-        elements.customError.style.display = hasNaN ? "block" : "none";
-        return hasNaN ? { ...defaultPrices } : p;
+        return { ...defaultPrices };
       }
 
       function getSelected(name) {
@@ -751,8 +622,85 @@
         });
       }
 
+      function updatePriceLabels(prices) {
+        // Количество дней
+        const dayInputs = elements.daysOptions.querySelectorAll(
+          'input[name="days"]'
+        );
+        dayInputs.forEach((input) => {
+          const chip = input.closest(".chip");
+          if (!chip) return;
+          const priceSpan = chip.querySelector(".price");
+          if (!priceSpan) return;
+          const days = Number(input.value);
+          const value = prices.base[days];
+          if (value == null) return;
+          priceSpan.textContent = `${formatMoney(value)} ₽`;
+        });
+
+        // Номер
+        const roomInputs = elements.roomOptions.querySelectorAll(
+          'input[name="room"]'
+        );
+        roomInputs.forEach((input) => {
+          const chip = input.closest(".chip");
+          if (!chip) return;
+          const priceSpan = chip.querySelector(".price");
+          if (!priceSpan) return;
+          const roomType = input.value;
+          const perNight = prices.room[roomType];
+          if (perNight == null) return;
+          priceSpan.textContent = `${formatMoney(perNight)} ₽/сутки`;
+        });
+
+        // Питание
+        const foodInputs = elements.foodOptions.querySelectorAll(
+          'input[name="food"]'
+        );
+        foodInputs.forEach((input) => {
+          const chip = input.closest(".chip");
+          if (!chip) return;
+          const priceSpan = chip.querySelector(".price");
+          if (!priceSpan) return;
+          const foodType = input.value;
+          const perMeal = prices.food[foodType];
+          if (perMeal == null) return;
+          if (foodType === "dinner") {
+            priceSpan.textContent = `${formatMoney(
+              perMeal
+            )} ₽ (кроме последнего дня)`;
+          } else {
+            priceSpan.textContent = `${formatMoney(perMeal)} ₽`;
+          }
+        });
+
+        // Лодка
+        const boatInputs = elements.boatOptions.querySelectorAll(
+          'input[name="boat"]'
+        );
+        boatInputs.forEach((input) => {
+          const chip = input.closest(".chip");
+          if (!chip) return;
+          const priceSpan = chip.querySelector(".price");
+          if (!priceSpan) return;
+          const boatType = input.value;
+          const delta = prices.boat[boatType];
+          if (delta == null) return;
+          if (boatType === "own") {
+            priceSpan.textContent = `${formatMoney(delta)} ₽`;
+          } else if (boatType === "rent") {
+            priceSpan.textContent = `${delta > 0 ? "+" : ""}${formatMoney(
+              Math.abs(delta)
+            )} ₽`;
+          } else if (boatType === "give") {
+            priceSpan.textContent = `скидка ${formatMoney(Math.abs(delta))} ₽`;
+          }
+        });
+      }
+
       function calculate() {
         const prices = getPrices();
+        updatePriceLabels(prices);
 
         const daysInput = getSelected("days");
         const roomInput = getSelected("room");
@@ -878,29 +826,6 @@
       attachChipHandlers(elements.roomOptions);
       attachChipHandlers(elements.foodOptions);
       attachChipHandlers(elements.boatOptions);
-
-      elements.enableCustom.addEventListener("change", () => {
-        elements.customBlock.style.display = elements.enableCustom.checked
-          ? "grid"
-          : "none";
-        calculate();
-      });
-
-      [
-        elements.base2,
-        elements.base3,
-        elements.base5,
-        elements.roomEconom,
-        elements.roomStandard,
-        elements.roomComfort,
-        elements.foodBreakfast,
-        elements.foodLunch,
-        elements.foodDinner,
-        elements.boatRent,
-        elements.orgFee
-      ].forEach((input) => {
-        input.addEventListener("input", calculate);
-      });
 
       if (elements.copySummaryBtn) {
         elements.copySummaryBtn.addEventListener("click", async () => {
