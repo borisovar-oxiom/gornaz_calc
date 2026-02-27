@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Калькулятор стоимости спортивных сборов</title>
   <style>
     :root {
@@ -375,6 +376,70 @@
       font-size: 11px;
       color: var(--danger);
       display: none;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 16px 8px;
+        align-items: flex-start;
+      }
+      .card,
+      .summary-card {
+        padding: 18px 14px 20px;
+        border-radius: 20px;
+      }
+      .container {
+        gap: 16px;
+      }
+      h1 {
+        font-size: 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+      }
+      .subtitle {
+        font-size: 12px;
+      }
+      .field-group {
+        padding: 12px 10px 10px;
+      }
+      .field-title {
+        font-size: 12px;
+      }
+      .field-note {
+        font-size: 10px;
+      }
+      .options {
+        gap: 8px;
+      }
+      .chip {
+        width: 100%;
+        justify-content: space-between;
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+      .summary-title-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .summary-meta {
+        width: 100%;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .summary-pill {
+        flex: 1;
+      }
+      .summary-copy-btn {
+        white-space: nowrap;
+      }
+      .total-value {
+        font-size: 26px;
+      }
+      .breakdown {
+        font-size: 11px;
+      }
     }
   </style>
 </head>
